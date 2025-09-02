@@ -1,0 +1,46 @@
+http:
+  middlewares:
+    ellio-edl:
+      plugin:
+        ellio:
+          bootstrapToken: "$BOOTSTRAP_TOKEN"
+          logLevel: "debug"
+          ipStrategy: "direct"
+
+    ellio-edl-xff:
+      plugin:
+        ellio:
+          bootstrapToken: "$BOOTSTRAP_TOKEN"
+          logLevel: "debug"
+          ipStrategy: "xff"
+          trustedProxies:
+            - "127.0.0.1"
+            - "private"
+
+  routers:
+    whoami:
+      rule: "Host(`whoami.localhost`)"
+      service: whoami
+      middlewares:
+        - ellio-edl
+      entryPoints:
+        - web
+
+    whoami-xff:
+      rule: "Host(`whoami-xff.localhost`)"
+      service: whoami-xff
+      middlewares:
+        - ellio-edl-xff
+      entryPoints:
+        - web
+
+  services:
+    whoami:
+      loadBalancer:
+        servers:
+          - url: "http://whoami:80"
+
+    whoami-xff:
+      loadBalancer:
+        servers:
+          - url: "http://whoami-xff:80"

@@ -1,0 +1,27 @@
+services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik-static.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - web
+    restart: unless-stopped
+
+  whoami:
+    image: traefik/whoami
+    container_name: whoami
+    networks:
+      - web
+    labels:
+      - "traefik.enable=false"  # Using file provider for explicit configuration
+
+networks:
+  web:
+    driver: bridge

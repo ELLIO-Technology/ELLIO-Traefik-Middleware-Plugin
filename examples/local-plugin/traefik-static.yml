@@ -1,0 +1,29 @@
+# Traefik Static Configuration - Local Plugin Development
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: :80
+  websecure:
+    address: :443
+
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+# Local plugin configuration for development
+experimental:
+  localPlugins:
+    ellio:
+      moduleName: github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin
+
+log:
+  level: INFO
+
+accessLog: {}

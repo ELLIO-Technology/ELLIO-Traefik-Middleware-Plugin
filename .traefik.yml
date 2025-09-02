@@ -1,0 +1,10 @@
+displayName: ELLIO Traefik Middleware Plugin
+type: middleware
+import: github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin
+summary: Dynamic IP blocklisting/allowlisting middleware using ELLIO External Dynamic Lists (EDL)
+testData:
+  bootstrapToken: "invalid-jwt-placeholder" # Placeholder for Traefik plugin validation
+
+
+iconPath: ./assets/icon.png
+bannerPath: ./assets/banner.png

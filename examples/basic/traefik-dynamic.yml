@@ -1,0 +1,37 @@
+# Traefik Dynamic Configuration
+http:
+  middlewares:
+    # ELLIO EDL middleware for IP filtering
+    ellio-edl:
+      plugin:
+        ellio:
+          bootstrapToken: "CHANGEME"
+          logLevel: "info"
+          ipStrategy: "xff"  # Use "direct" if not behind a proxy
+          trustedProxies:
+            - "10.0.0.0/8"
+            - "172.16.0.0/12"
+            - "192.168.0.0/16"
+
+  routers:
+    # Protected service
+    protected-app:
+      rule: "Host(`app.example.com`)"
+      service: whoami
+      middlewares:
+        - ellio-edl
+      entryPoints:
+        - web
+
+    # Dashboard (optional - remove in production or add auth)
+    dashboard:
+      rule: "Host(`traefik.example.com`)"
+      service: api@internal
+      entryPoints:
+        - web
+
+  services:
+    whoami:
+      loadBalancer:
+        servers:
+          - url: "http://whoami:80"

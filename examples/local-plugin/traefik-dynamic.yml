@@ -1,0 +1,46 @@
+# Traefik Dynamic Configuration
+http:
+  middlewares:
+    # Basic middleware with direct IP strategy
+    ellio-direct:
+      plugin:
+        ellio:
+          bootstrapToken: "CHANGEME"
+          logLevel: "info"
+          ipStrategy: "direct"
+
+    # Middleware with X-Forwarded-For support
+    ellio-xff:
+      plugin:
+        ellio:
+          bootstrapToken: "CHANGEME"
+          logLevel: "info"
+          ipStrategy: "xff"
+          trustedProxies:
+            - "127.0.0.1"
+            - "private"
+
+  routers:
+    # Route with direct IP strategy
+    whoami-direct:
+      rule: "Host(`whoami.localhost`)"
+      service: whoami
+      middlewares:
+        - ellio-direct
+      entryPoints:
+        - web
+
+    # Route with XFF IP strategy
+    whoami-xff:
+      rule: "Host(`whoami-xff.localhost`)"
+      service: whoami
+      middlewares:
+        - ellio-xff
+      entryPoints:
+        - web
+
+  services:
+    whoami:
+      loadBalancer:
+        servers:
+          - url: "http://whoami:80"

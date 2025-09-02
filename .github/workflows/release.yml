@@ -1,0 +1,190 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to release (e.g., v1.0.0)'
+        required: true
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  validate-tag:
+    name: Validate Tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.tag }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+
+          # Validate semver format
+          if ! echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$'; then
+            echo "Error: Invalid version format. Expected semver (e.g., v1.0.0)"
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: validate-tag
+    strategy:
+      matrix:
+        go-version: ['1.21', '1.22']
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            **/go.sum
+
+      - name: Run tests
+        run: |
+          go test -v -race ./...
+
+  plugin-validation:
+    name: Validate Plugin
+    runs-on: ubuntu-latest
+    needs: validate-tag
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            **/go.sum
+
+      - name: Validate plugin structure
+        run: |
+          # Check required files
+          for file in ".traefik.yml" "go.mod" "middleware.go"; do
+            if [ ! -f "$file" ]; then
+              echo "Error: Required file $file not found"
+              exit 1
+            fi
+          done
+          echo "✓ All required files present"
+
+      - name: Update vendor directory
+        run: |
+          go mod vendor
+          echo "✓ Vendor directory updated"
+
+      - name: Check Yaegi compatibility
+        run: |
+          go install github.com/traefik/yaegi/cmd/yaegi@latest
+          # Basic syntax check
+          yaegi extract -name ELLIO_Traefik_Middleware_Plugin . || true
+        continue-on-error: true
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [validate-tag, test, plugin-validation]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+          cache-dependency-path: |
+            go.sum
+            **/go.sum
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          VERSION=${{ needs.validate-tag.outputs.version }}
+
+          # Get previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 ${VERSION}^ 2>/dev/null || echo "")
+
+          echo "## What's Changed" > changelog.md
+          echo "" >> changelog.md
+
+          if [ -n "$PREV_TAG" ]; then
+            # Get commits between tags
+            git log ${PREV_TAG}..${VERSION} --pretty=format:"- %s (%h)" --no-merges >> changelog.md
+          else
+            # First release - get all commits
+            git log ${VERSION} --pretty=format:"- %s (%h)" --no-merges >> changelog.md
+          fi
+
+          echo "" >> changelog.md
+          echo "" >> changelog.md
+          echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${VERSION}" >> changelog.md
+
+          # Save for release notes
+          cat changelog.md
+
+      - name: Create release archive
+        run: |
+          VERSION=${{ needs.validate-tag.outputs.version }}
+          ARCHIVE_NAME="ellio-traefik-middleware-plugin-${VERSION}"
+
+          # Create vendor directory
+          go mod vendor
+
+          # Create archive with essential files
+          mkdir -p ${ARCHIVE_NAME}
+          cp -r *.go pkg vendor ${ARCHIVE_NAME}/
+          cp .traefik.yml go.mod go.sum README.md LICENSE* ${ARCHIVE_NAME}/ 2>/dev/null || true
+
+          # Create tar.gz
+          tar -czf ${ARCHIVE_NAME}.tar.gz ${ARCHIVE_NAME}
+
+          # Create zip
+          zip -r ${ARCHIVE_NAME}.zip ${ARCHIVE_NAME}
+
+          echo "Archives created:"
+          ls -lh ${ARCHIVE_NAME}.*
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.validate-tag.outputs.version }}
+          name: Release ${{ needs.validate-tag.outputs.version }}
+          body_path: changelog.md
+          draft: false
+          prerelease: ${{ contains(needs.validate-tag.outputs.version, '-') }}
+          files: |
+            ellio-traefik-middleware-plugin-*.tar.gz
+            ellio-traefik-middleware-plugin-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

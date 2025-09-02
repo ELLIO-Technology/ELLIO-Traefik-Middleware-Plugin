@@ -1,0 +1,77 @@
+services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik-test
+    command:
+      # Enable API and dashboard
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      # Configure entrypoints
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # Enable Docker provider
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # Enable file provider for dynamic configuration
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      # Configure local plugin
+      - "--experimental.localPlugins.ellio.moduleName=github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin"
+      # Set log level
+      - "--log.level=DEBUG"
+    ports:
+      - "8080:80"       # HTTP
+      - "8443:443"      # HTTPS
+      - "18081:8080"    # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ../:/plugins-local/src/github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin:ro
+      - ./traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+    environment:
+      # Bootstrap token from environment or fallback to placeholder
+      ELLIO_BOOTSTRAP: ${BOOTSTRAP_TOKEN:-invalid-jwt-placeholder}
+    networks:
+      - test-network
+    labels:
+      - "traefik.enable=true"
+
+  # Test backend service
+  whoami:
+    image: traefik/whoami
+    container_name: whoami-test
+    # No labels needed - routing configured in traefik-dynamic.yml
+    networks:
+      - test-network
+
+  # Test backend service with XFF headers
+  whoami-xff:
+    image: traefik/whoami
+    container_name: whoami-xff-test
+    # No labels needed - routing configured in traefik-dynamic.yml
+    networks:
+      - test-network
+
+  # Test runner service for E2E tests
+  tests:
+    build:
+      context: ..
+      dockerfile: ci/Dockerfile.test
+    container_name: e2e-tests
+    depends_on:
+      - traefik
+      - whoami
+      - whoami-xff
+    environment:
+      TRAEFIK_URL: http://traefik:80
+      WHOAMI_HOST: whoami.localhost
+      WHOAMI_XFF_HOST: whoami-xff.localhost
+      # Bootstrap token from environment or fallback to placeholder
+      ELLIO_BOOTSTRAP: ${BOOTSTRAP_TOKEN:-invalid-jwt-placeholder}
+    networks:
+      - test-network
+    volumes:
+      - ./e2e:/tests:ro
+    command: ["go", "test", "-v", "/tests/..."]
+
+networks:
+  test-network:
+    driver: bridge

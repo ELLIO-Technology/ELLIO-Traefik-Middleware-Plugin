@@ -1,0 +1,30 @@
+# Traefik Static Configuration - Production Setup
+api:
+  dashboard: true
+  insecure: true  # Set to false in production and use proper authentication
+
+entryPoints:
+  web:
+    address: :80
+  websecure:
+    address: :443
+
+providers:
+  docker:
+    endpoint: unix:///var/run/docker.sock
+    exposedByDefault: false
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+# Plugin from catalog
+experimental:
+  plugins:
+    ellio:
+      moduleName: github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin
+      version: v1.0.0  # Use the latest version
+
+log:
+  level: INFO
+
+accessLog: {}

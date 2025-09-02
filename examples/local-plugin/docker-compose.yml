@@ -1,0 +1,33 @@
+services:
+  traefik:
+    image: traefik:v3.2
+    container_name: traefik-local-plugin
+    ports:
+      - "8080:80"       # HTTP
+      - "8443:443"      # HTTPS
+      - "8081:8080"     # Traefik dashboard
+    volumes:
+      # Docker socket for provider
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Mount plugin source for local development
+      - ../../:/plugins-local/src/github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin:ro
+      # Static configuration
+      - ./traefik-static.yml:/etc/traefik/traefik.yml:ro
+      # Dynamic configuration
+      - ./traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+
+  whoami:
+    image: traefik/whoami
+    container_name: whoami-service
+    networks:
+      - traefik-network
+    labels:
+      - "traefik.enable=false"  # Routing handled by file provider
+
+networks:
+  traefik-network:
+    driver: bridge
