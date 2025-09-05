@@ -272,7 +272,7 @@ For development setup, testing, and contribution guidelines, see [DEVELOPMENT.md
 
 ## License
 
-Copyright © 2024 ELLIO Technology s.r.o.
+Copyright © 2025 ELLIO Technology s.r.o.
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.
 
