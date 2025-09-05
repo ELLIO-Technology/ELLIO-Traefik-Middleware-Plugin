@@ -20,7 +20,7 @@
 
 ## Overview
 
-The ELLIO Traefik Middleware Plugin provides enterprise-grade IP-based access control for Traefik proxy servers. It integrates with the ELLIO platform to dynamically manage IP allowlists and blocklists through External Dynamic Lists (EDL), ensuring your services are protected against unauthorized access.
+The ELLIO Traefik Middleware Plugin provides IP-based access control for services behind Traefik proxy. It integrates with the ELLIO platform to dynamically manage IP allowlists and blocklists through External Dynamic Lists (EDL), ensuring your services are protected against promiscious scanners and mass exploitation attempts.
 
 ## Prerequisites
 
