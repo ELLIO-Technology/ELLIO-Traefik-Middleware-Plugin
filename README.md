@@ -11,6 +11,7 @@
 [![CI Status](https://img.shields.io/github/actions/workflow/status/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin/ci.yml?branch=main&style=flat&label=CI)](https://github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin/actions)
 [![GitHub Release](https://img.shields.io/github/v/release/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin?style=flat)](https://github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin/releases)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue?style=flat)](LICENSE)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin)](https://goreportcard.com/report/github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin)
 
 [Documentation](https://docs.ellio.tech) • [ELLIO Platform](https://platform.ellio.tech) • [Report Issue](https://github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin/issues)
 
