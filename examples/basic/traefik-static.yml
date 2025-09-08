@@ -22,7 +22,7 @@ experimental:
   plugins:
     ellio:
       moduleName: github.com/ELLIO-Technology/ELLIO-Traefik-Middleware-Plugin
-      version: v1.0.0  # Use the latest version
+      version: v1.0.1  # Use the latest version
 
 log:
   level: INFO

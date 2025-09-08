@@ -3,21 +3,21 @@
 
 gerbil:
     start_port: 51820
-    base_endpoint: "pangolin.istelnetdead.com"
+    base_endpoint: "pangolin.example.com"
 
 app:
-    dashboard_url: "https://pangolin.istelnetdead.com"
+    dashboard_url: "https://pangolin.example.com"
     log_level: "info"
 
 domains:
     domain1:
-        base_domain: "istelnetdead.com"
+        base_domain: "example.com"
         cert_resolver: "letsencrypt"
 
 server:
-    secret: "Bq0OTRpFPnCbhqxDtqiYqmCfsQkI9orj"
+    secret: "pangolin"
     cors:
-        origins: ["https://pangolin.istelnetdead.com"]
+        origins: ["https://pangolin.example.com"]
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"]
         allowed_headers: ["X-CSRF-Token", "Content-Type"]
         credentials: false
