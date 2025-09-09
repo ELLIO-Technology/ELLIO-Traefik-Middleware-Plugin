@@ -81,7 +81,7 @@ func (c *BootstrapClient) Bootstrap(ctx context.Context, token string, machineID
 	req := BootstrapRequest{
 		BootstrapToken:   token,
 		ComponentType:    componentType,
-		ComponentVersion: "1.0.0",
+		ComponentVersion: "1.0.2",
 		MachineID:        machineID,
 		Scopes:           []string{"edl_config", "edl_logs"},
 	}
